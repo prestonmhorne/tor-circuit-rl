@@ -19,7 +19,7 @@ class CircuitEnv(gym.Env):
         self.observation_space = spaces.Box(
             low=0, 
             high=1, 
-            shape=(self.num_relays + 1,),
+            shape=(self.num_relays * 3 + 1,),
             dtype=np.float32
         )
 
@@ -116,12 +116,14 @@ class CircuitEnv(gym.Env):
         return relays
     
     def _get_observation(self):
-        obs = np.zeros(self.num_relays + 1, dtype=np.float32)
+        obs = np.zeros(self.num_relays * 3 + 1, dtype=np.float32)
 
         obs[0] = self.circuit_pos / 2.0
 
         for i in range(self.num_relays):
-            obs[i + 1] = self.relays[i]['bandwidth'] / config.MAX_BANDWIDTH
+            obs[i*3 + 1] = self.relays[i]['bandwidth'] / config.MAX_BANDWIDTH
+            obs[i*3 + 2] = float(self.relays[i]['guard_flag'])
+            obs[i*3 + 3] = float(self.relays[i]['exit_flag'])
 
         return obs
     

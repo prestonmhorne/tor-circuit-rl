@@ -5,9 +5,9 @@ import config
 
 class QLearningAgent:
     
-    def __init__(self, num_relays):
+    def __init__(self, action_dim):
 
-        self.num_relays = num_relays
+        self.action_dim = action_dim
 
         self.learning_rate = config.Q_LEARNING_RATE
         self.discount_factor = config.DISCOUNT_FACTOR
@@ -15,7 +15,7 @@ class QLearningAgent:
         self.epsilon_decay = config.Q_EPSILON_DECAY
         self.min_epsilon = config.Q_MIN_EPSILON
 
-        self.Q = np.zeros((3, num_relays))
+        self.Q = np.zeros((3, action_dim))
 
     def policy(self, state):
         
@@ -23,7 +23,7 @@ class QLearningAgent:
 
         if np.random.random() < self.epsilon:
 
-            action = np.random.randint(self.num_relays)
+            action = np.random.randint(self.action_dim)
         else:
             action = np.argmax(self.Q[circuit_pos])
 

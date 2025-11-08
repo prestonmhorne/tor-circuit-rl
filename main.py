@@ -5,7 +5,7 @@ import argparse
 import config
 from tor_circuit_env import CircuitEnv
 from q_agent import QLearningAgent
-# from dqn_agent import DQNAgent
+from dqn_agent import DQNAgent
 # from a2c_agent import A2CAgent
 
 def main():
@@ -22,13 +22,13 @@ def main():
     env = CircuitEnv()
 
     if args.agent == 'q':  
-        agent = QLearningAgent(num_relays=config.NUM_RELAYS)
-    # elif args.agent == 'dqn':
-    #     agent = DQNAgent(num_relays=config.NUM_RELAYS,
-    #                      obs_dim=env.observation_space.shape[0])
+        agent = QLearningAgent(action_dim=config.NUM_RELAYS)
+    elif args.agent == 'dqn':
+        agent = DQNAgent(action_dim=config.NUM_RELAYS,
+                         state_dim=env.observation_space.shape[0])
     # elif args.agent == 'a2c':
-    #     agent = A2CAgent(num_relays=config.NUM_RELAYS,
-    #                      obs_dim=env.observation_space.shape[0])
+    #     agent = A2CAgent(action_dim=config.NUM_RELAYS,
+    #                      state_dim=env.observation_space.shape[0])
     
 
     print(f"Training {agent.__class__.__name__}...")
@@ -69,7 +69,7 @@ def main():
         middle_relay = env.relays[env.middle_relay]
         exit_relay = env.relays[env.exit_relay]
         print("\nCircuit on Termination")   
-        print(f"Entry Guard:  #{env.entry_guard:3d}: Bandwidth = {entry_guard['bandwidth']:6.2f} MB/s, Latency = {entry_guard['latency']:6.2f} ms")
+        print(f"Entry Guard: #{env.entry_guard:3d}: Bandwidth = {entry_guard['bandwidth']:6.2f} MB/s, Latency = {entry_guard['latency']:6.2f} ms")
         print(f"Middle Relay: #{env.middle_relay:3d}: Bandwidth = {middle_relay['bandwidth']:6.2f} MB/s, Latency = {middle_relay['latency']:6.2f} ms")
         print(f"Exit Relay: #{env.exit_relay:3d}: Bandwidth = {exit_relay['bandwidth']:6.2f} MB/s, Latency = {exit_relay['latency']:6.2f} ms")
 
