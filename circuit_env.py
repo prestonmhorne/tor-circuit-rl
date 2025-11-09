@@ -19,7 +19,7 @@ class CircuitEnv(gym.Env):
         self.observation_space = spaces.Box(
             low=0, 
             high=1, 
-            shape=(self.num_relays * 4 + 1,),
+            shape=(self.num_relays * 4 + 1 + 8,),
             dtype=np.float32
         )
 
@@ -83,6 +83,8 @@ class CircuitEnv(gym.Env):
             if action != self.entry_guard:
                 self.middle_relay = action
                 self.circuit_pos = 1
+                reward = 0
+                terminated = False
             else: 
                 reward = config.REWARD_INVALID
                 terminated = True
@@ -144,7 +146,7 @@ class CircuitEnv(gym.Env):
         return relays
     
     def _get_observation(self):
-        obs = np.zeros(self.num_relays * 4 + 1, dtype=np.float32)
+        obs = np.zeros(self.num_relays * 4 + 1 + 8, dtype=np.float32)
 
         obs[0] = self.circuit_pos / 2.0
 
@@ -153,6 +155,20 @@ class CircuitEnv(gym.Env):
             obs[i*4 + 2] = self.relays[i]['latency'] / config.MAX_LATENCY
             obs[i*4 + 3] = float(self.relays[i]['guard_flag'])
             obs[i*4 + 4] = float(self.relays[i]['exit_flag'])
+
+
+        base_idx = self.num_relays * 4 + 1
+
+        obs[base_idx] = self.relays[self.entry_guard]['bandwidth'] / config.MAX_BANDWIDTH
+        obs[base_idx + 1] = self.relays[self.entry_guard]['latency'] / config.MAX_LATENCY
+        obs[base_idx + 2] = float(self.relays[self.entry_guard]['guard_flag'])
+        obs[base_idx + 3] = float(self.relays[self.entry_guard]['exit_flag'])
+
+        if self.middle_relay is not None:
+            obs[base_idx + 4] = self.relays[self.middle_relay]['bandwidth'] / config.MAX_BANDWIDTH
+            obs[base_idx + 5] = self.relays[self.middle_relay]['latency'] / config.MAX_LATENCY
+            obs[base_idx + 6] = float(self.relays[self.middle_relay]['guard_flag'])
+            obs[base_idx + 7] = float(self.relays[self.middle_relay]['exit_flag'])
 
         return obs
     

@@ -108,7 +108,8 @@ class DQNAgent:
         current_q_values = self.q_network(states).gather(1, actions.unsqueeze(1)).squeeze(1)
 
         with torch.no_grad():
-            next_q_values = self.target_network(next_states).max(1)[0]
+            next_actions = self.q_network(next_states).argmax(1)
+            next_q_values = self.target_network(next_states).gather(1, next_actions.unsqueeze(1)).squeeze(1)
             target_q_values = rewards + (1 - dones) * self.discount_factor * next_q_values
 
         loss = nn.MSELoss()(current_q_values, target_q_values)
