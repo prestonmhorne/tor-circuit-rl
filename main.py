@@ -32,8 +32,12 @@ def evaluate_agent(agent, env, num_episodes=100, agent_name="Agent"):
 
         while not terminated:
             action_mask = env.get_action_mask()
-            relay_info = env.get_relay_info()
-            action = agent.select_action(obs, action_mask, relay_info)
+            relays = env.get_relays()
+
+            if isinstance(agent, BaselineAgent):
+                action = agent.select_action(action_mask, relays)
+            else:
+                action = agent.select_action(obs, action_mask, relays)
 
             next_obs, reward, terminated, _, _ = env.step(action)
             obs = next_obs
@@ -158,10 +162,7 @@ def main():
         state_dim=env.observation_space.shape[0]
     )
 
-    baseline_agent = BaselineAgent(
-        action_dim=config.ENV_NUM_RELAYS,
-        state_dim=env.observation_space.shape[0]
-    )
+    baseline_agent = BaselineAgent()
 
     print("="*80)
     print("TRAINING DQN AGENT")
@@ -176,14 +177,14 @@ def main():
 
         while not terminated:
             action_mask = env.get_action_mask()
-            relay_info = env.get_relay_info()
-            action = dqn_agent.select_action(obs, action_mask, relay_info)
+            relays = env.get_relays()
+            action = dqn_agent.select_action(obs, action_mask, relays)
 
             next_obs, reward, terminated, _, _ = env.step(action)
 
             next_action_mask = env.get_action_mask()
-            next_relay_info = env.get_relay_info()
-            dqn_agent.store_transition(obs, action, reward, next_obs, terminated, relay_info, next_relay_info, next_action_mask)
+            next_relays = env.get_relays()
+            dqn_agent.store_transition(obs, action, reward, next_obs, terminated, relays, next_relays, next_action_mask)
             dqn_agent.train_step()
 
             obs = next_obs

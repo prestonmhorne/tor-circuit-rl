@@ -68,7 +68,7 @@ class CircuitEnv(gym.Env):
                     mask[i] = False
         return mask 
     
-    def get_relay_info(self):
+    def get_relays(self):
         return self.relays
 
     def reset(self, seed=None, options=None):

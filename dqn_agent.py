@@ -32,21 +32,21 @@ class ReplayBuffer:
     def __init__(self, capacity):
         self.buffer = deque(maxlen=capacity)
 
-    def push(self, state, action, relay_features, reward, next_state, next_relay_info, next_action_mask, done):
-        self.buffer.append((state, action, relay_features, reward, next_state, next_relay_info, next_action_mask, done))
+    def push(self, state, action, relay_features, reward, next_state, next_relays, next_action_mask, done):
+        self.buffer.append((state, action, relay_features, reward, next_state, next_relays, next_action_mask, done))
 
     def sample(self, batch_size):
         indices = np.random.choice(len(self.buffer), batch_size, replace=False)
         batch = [self.buffer[idx] for idx in indices]
 
-        states, _, relay_features, rewards, next_states, next_relay_infos, next_action_masks, dones = zip(*batch)
+        states, _, relay_features, rewards, next_states, next_relays_batch, next_action_masks, dones = zip(*batch)
         return (
             np.array(states),
             np.array(relay_features),
             np.array(rewards, dtype=np.float32),
             np.array(next_states),
-            list(next_relay_infos),  
-            list(next_action_masks), 
+            list(next_relays_batch),
+            list(next_action_masks),
             np.array(dones, dtype=np.float32)
         )
 
@@ -87,12 +87,12 @@ class DQNAgent:
             float(relay['exit_flag'])
         ], dtype=np.float32)
 
-    def select_action(self, state, action_mask=None, relay_info=None):
+    def select_action(self, state, action_mask=None, relays=None):
         if np.random.random() < self.epsilon:
             if action_mask is not None:
                 valid_actions = np.where(action_mask)[0]
 
-                bandwidths = np.array([relay_info[i]['bandwidth'] for i in valid_actions])
+                bandwidths = np.array([relays[i]['bandwidth'] for i in valid_actions])
 
                 probs = bandwidths / bandwidths.sum()
                 return np.random.choice(valid_actions, p=probs)
@@ -101,7 +101,7 @@ class DQNAgent:
             valid_actions = np.where(action_mask)[0] if action_mask is not None else np.arange(self.action_dim)
 
             with torch.no_grad():
-                relay_features_list = [self._extract_relay_features(relay_info[action]) for action in valid_actions]
+                relay_features_list = [self._extract_relay_features(relays[action]) for action in valid_actions]
                 relay_features_batch = torch.FloatTensor(np.array(relay_features_list))
 
                 state_batch = torch.FloatTensor(state).unsqueeze(0).repeat(len(valid_actions), 1)
@@ -113,17 +113,17 @@ class DQNAgent:
 
             return best_action
 
-    def store_transition(self, state, action, reward, next_state, terminated, relay_info, next_relay_info, next_action_mask):
+    def store_transition(self, state, action, reward, next_state, terminated, relays, next_relays, next_action_mask):
         """Store transition in replay buffer"""
-        relay_features = self._extract_relay_features(relay_info[action])
-        self.memory.push(state, action, relay_features, reward, next_state, next_relay_info, next_action_mask, terminated)
+        relay_features = self._extract_relay_features(relays[action])
+        self.memory.push(state, action, relay_features, reward, next_state, next_relays, next_action_mask, terminated)
 
     def train_step(self):
         """Perform one step of training on a batch from replay buffer"""
         if len(self.memory) < self.batch_size:
             return
 
-        states, relay_features_batch, rewards, next_states, next_relay_infos, next_action_masks, dones = self.memory.sample(self.batch_size)
+        states, relay_features_batch, rewards, next_states, next_relays_batch, next_action_masks, dones = self.memory.sample(self.batch_size)
 
         states = torch.FloatTensor(states)
         relay_features_batch = torch.FloatTensor(relay_features_batch)
@@ -147,7 +147,7 @@ class DQNAgent:
                     for action in valid_actions:
                         batch_states.append(next_states[i])
                         batch_action_features.append(
-                            self._extract_relay_features(next_relay_infos[i][action])
+                            self._extract_relay_features(next_relays_batch[i][action])
                         )
                         batch_indices.append(i)
 

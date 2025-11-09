@@ -3,17 +3,37 @@
 import numpy as np
 
 class BaselineAgent:
-    """Tor's Current Implementation: Bandwidth-Weighted Random Selection"""
+    """
+    Bandwidth-weighted random relay selection.
+
+    Implements a simplified version of Tor's current relay selection algorithm
+    where relays are chosen with probability proportional to their bandwidth.
     
-    def __init__(self, action_dim, state_dim):
-        self.action_dim = action_dim
-        self.state_dim = state_dim
+    Reference: https://spec.torproject.org/path-spec/
+    """
 
-    def select_action(self, state, action_mask, relay_info):
-        valid_actions = np.where(action_mask)[0]
+    def select_action(self, action_mask, relays):
+        """
+        Select a relay using bandwidth-weighted random sampling.
+
+        Args:
+            action_mask: Boolean array indicating valid relay choices
+            relays: List of relay dictionaries
         
-        bandwidths = np.array([relay_info[i]['bandwidth'] for i in valid_actions])
-        probs = bandwidths / bandwidths.sum()
-        selected_idx = np.random.choice(len(valid_actions), p=probs)
+        Returns:
+            int: Index of the selected relay
+        """
 
-        return valid_actions[selected_idx]
+        # List of relay IDs that are valid for selection
+        valid_actions = np.where(action_mask)[0]
+
+        # Extract bandwidths for valid relays
+        bandwidths = np.array([relays[i]['bandwidth'] for i in valid_actions])
+        
+        # Normalize bandwidths to probability distribution (sums to 1.0)
+        probabilities = bandwidths / bandwidths.sum()
+
+        # Randomly select relay weighted by bandwidth
+        selected_action = np.random.choice(valid_actions, p=probabilities)
+
+        return selected_action
