@@ -148,7 +148,7 @@ class CircuitEnv(gym.Env):
     def _get_observation(self):
         obs = np.zeros(self.num_relays * 4 + 1, dtype=np.float32)
 
-        obs[0] = self.circuit_pos / 1.0
+        obs[0] = self.circuit_pos / 2.0
 
         for i in range(self.num_relays):
             obs[i*4 + 1] = self.relays[i]['bandwidth'] / config.MAX_BANDWIDTH
