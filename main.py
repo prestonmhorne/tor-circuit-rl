@@ -3,7 +3,7 @@
 import numpy as np
 import argparse
 import config
-from tor_circuit_env import CircuitEnv
+from circuit_env import CircuitEnv
 from q_agent import QLearningAgent
 from dqn_agent import DQNAgent
 # from a2c_agent import A2CAgent
@@ -81,7 +81,7 @@ def main():
         print(f"Total Latency: {circuit_latency:.2f} ms")
         print(f"Final Reward: {episode_reward:.2f}")
     else:
-        print("\nCircuit creation failed")
+        print("\nCircuit Failed")
 
 
 

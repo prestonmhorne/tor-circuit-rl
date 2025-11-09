@@ -15,7 +15,7 @@ class QLearningAgent:
         self.epsilon_decay = config.Q_EPSILON_DECAY
         self.min_epsilon = config.Q_MIN_EPSILON
 
-        self.Q = np.zeros((3, action_dim))
+        self.Q = np.zeros((2, action_dim))
 
     def policy(self, state):
         
@@ -49,5 +49,4 @@ class QLearningAgent:
         self.epsilon = max(self.min_epsilon, self.epsilon * self.epsilon_decay)
 
     def _encode_state(self, state):
-        return int(state[0] * 2)
-        
+        return int(state[0])

@@ -1,9 +1,10 @@
-# tor_circuit_env.py
+# circuit_env.py
 
 import config
 from gymnasium import spaces
 import gymnasium as gym
 import numpy as np
+import random
 
 class CircuitEnv(gym.Env): 
 
@@ -23,15 +24,21 @@ class CircuitEnv(gym.Env):
             dtype=np.float32
         )
 
+        self.persistent_guard = self._select_persistent_guard()
         self.entry_guard = None
         self.middle_relay = None
         self.exit_relay = None
         self.circuit_pos = 0
+
+    def _select_persistent_guard(self):
+        guards = [i for i in range(self.num_relays) if self.relays[i]['guard_flag']]
+        bandwidths = [self.relays[i]['bandwidth']for i in guards]
+        return random.choices(guards, weights=bandwidths)[0]
     
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
 
-        self.entry_guard = None
+        self.entry_guard = self.persistent_guard
         self.middle_relay = None
         self.exit_relay = None
         self.circuit_pos = 0
@@ -47,25 +54,15 @@ class CircuitEnv(gym.Env):
         terminated = False
 
         if self.circuit_pos == 0:
-            if self.relays[action]['guard_flag']:
-                self.entry_guard = action
-                reward = config.REWARD_VALID
-                self.circuit_pos = 1
-            else:
-                reward = config.REWARD_INVALID
-                terminated = True
-
-        elif self.circuit_pos == 1:
             if action != self.entry_guard:
                 self.middle_relay = action
                 reward = config.REWARD_VALID
-                self.circuit_pos = 2
+                self.circuit_pos = 1
             else: 
                 reward = config.REWARD_INVALID
                 terminated = True
 
-
-        elif self.circuit_pos == 2:
+        elif self.circuit_pos == 1:
             if (action != self.entry_guard and
                 action != self.middle_relay and
                 self.relays[action]['exit_flag']):
@@ -118,7 +115,7 @@ class CircuitEnv(gym.Env):
     def _get_observation(self):
         obs = np.zeros(self.num_relays * 3 + 1, dtype=np.float32)
 
-        obs[0] = self.circuit_pos / 2.0
+        obs[0] = self.circuit_pos / 1.0
 
         for i in range(self.num_relays):
             obs[i*3 + 1] = self.relays[i]['bandwidth'] / config.MAX_BANDWIDTH
